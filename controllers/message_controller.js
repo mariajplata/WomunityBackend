@@ -46,48 +46,6 @@ const createMessage = async (req, res) => {
 }
 
 /**
- * Update a message
- * @param {*} req 
- * @param {*} res 
- */
-const updateMessage = async (req, res) => {
-    try {
-        const { message_id, user_id } = req.params;
-        const updateBody = req.body;
-        
-        if (!user_id || user_id == ':user_id' || !message_id || message_id == ':message_id')
-            throw new Error('Some params are missing.');
-        
-        if (!updateBody) throw new Error('Missing body to update.')
-
-        let message = await Message.findById(new ObjectId(message_id)).populate('creatorId');
-        if (!message) {
-            throw new Error('Message does not exist.');
-        } else if (message.creatorId._id != user_id) {
-            throw new Error('User is not the message owner.')
-        }
-        
-        let newMessage = 
-            await Message.findOneAndUpdate({ _id: message._id }, { $set: updateBody }, { new: true })
-            .populate({ path: 'creatorId', select: 'email fullUserName _id' });        
-
-        res.json({
-            success: true,
-            data: newMessage,
-            msg: 'Message updated successfully'
-        })
-
-    } catch (error) {
-        console.error('Error updating a message | updateMessage', error)
-        res.status(400).json({
-            success: false,
-            error: error.message,
-            msg: 'Something went wrong updating the message'
-        });
-    }
-}
-
-/**
  * Get all messages, ready to be use including pagination, 
  * Filter by user, message title or all messages
  * @param {*} req 
@@ -112,14 +70,6 @@ const getAllMessages = async (req, res) => {
         } else if (userId) {
             query = {
                 'creator._id': new ObjectId(userId)
-            }
-        }
-
-        if (by_date) {
-            console.log(by_date);
-            query = {
-                ...query,
-                createdAt: { $gte: new Date(by_date), $lte: new Date(by_date) }
             }
         }
 
@@ -156,6 +106,5 @@ const getAllMessages = async (req, res) => {
 
 module.exports = {
     createMessage,
-    updateMessage,
     getAllMessages,
 }
